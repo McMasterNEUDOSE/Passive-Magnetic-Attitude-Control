@@ -5,10 +5,10 @@ app = actxserver('STK11.application');
 app.visible = 2;
 root = app.Personality2; 
 
-days=4;
+days=1;
 timestep=1; %Timestep of data acquisition in seconds
 start_time='21 Jun 2022 16:00:00.000';
-stop_time='25 Jun 2022 16:00:00.000';
+stop_time='22 Jun 2022 16:00:00.000';
 scenario = root.Children.New('eScenario','Data_Collection');
 scenario.SetTimePeriod(start_time,stop_time);
 scenario.StartTime = start_time;
@@ -48,8 +48,7 @@ satellite.Propagator.Propagate;
 % IAgSatellite satellite: Satellite object
 % satellite.Attitude.('eprofileECIVelNadir');
 % basic = satellite.Attitude.Basic;
-root.ExecuteCommand('SetAttitude */Satellite/Neudose Profile ECIVelNadir Offset 0.0');
-
+root.ExecuteCommand('SetAttitude */Satellite/Neudose Profile InertFix Euler 0 0 0 123');
 
 % %below determines the relative rates at which it is spinning per axis
 % basic.Profile.Body.AssignXYZ(1,1,1)
@@ -88,13 +87,13 @@ bdot_eci=[bdot_eci; bdot_eci(end,:)/timestep];
 root.UnitPreferences.Item('DateFormat').SetCurrentUnit('EpSec'); 
 attDP_eci = satellite.DataProviders.Item( 'Attitude Quaternions').Exec(scenario.StartTime,scenario.StopTime,timestep); 
 time =  cell2mat(attDP_eci.DataSets.GetDataSetByName('Time').GetValues); 
-q1_eci = cell2mat(attDP_eci.DataSets.GetDataSetByName('q1').GetValues); 
-q2_eci = cell2mat(attDP_eci.DataSets.GetDataSetByName('q2').GetValues); 
-q3_eci = cell2mat(attDP_eci.DataSets.GetDataSetByName('q3').GetValues); 
-q4_eci = cell2mat(attDP_eci.DataSets.GetDataSetByName('q4').GetValues); 
+% q1_eci = cell2mat(attDP_eci.DataSets.GetDataSetByName('q1').GetValues); 
+% q2_eci = cell2mat(attDP_eci.DataSets.GetDataSetByName('q2').GetValues); 
+% q3_eci = cell2mat(attDP_eci.DataSets.GetDataSetByName('q3').GetValues); 
+% q4_eci = cell2mat(attDP_eci.DataSets.GetDataSetByName('q4').GetValues); 
 % 
 % 
- att_eci=[q4_eci q1_eci q2_eci q3_eci ]; %convert to scalar first for use in MATLAB
+%  att_eci=[q4_eci q1_eci q2_eci q3_eci ]; %convert to scalar first for use in MATLAB
 %save(att_eciname,'att_eci');
 % 
 % 
@@ -128,7 +127,7 @@ intensity = satellite.DataProviders.Item('Solar Intensity').Exec(scenario.StartT
 int=cell2mat(intensity.DataSets.GetDataSetByName('Intensity').GetValues);
 int=int/100;
 
-data=[time pos_eci vel_eci magdata_eci bdot_eci att_eci sun_unit int];
+data=[time pos_eci vel_eci magdata_eci bdot_eci sun_unit int];
 save(savename,'data');
 toc;
 % 
