@@ -1,7 +1,8 @@
 function v = lininterp1(X, V, x)
+% From: https://www.mathworks.com/matlabcentral/fileexchange/28376-faster-linear-interpolation
 % linear interpolation, given set of X and V values, and an x query
 % assumes X values are in strictly increasing order
-%
+% 
 % Differences from matlab built-in :
 %       much, much faster
 %       if coordinate is exactly on the spot, doesn't look at neighbors.  e.g. interpolate([blah, blah2], [0, NaN], blah) returns 0 instead of NaN
