@@ -1,4 +1,5 @@
 # Passive-Magnetic-Attitude-Control
+The physical data used for simulation can be found at : https://drive.google.com/drive/folders/194ralzQNBT4iwupcq72sTHUX19cXKTNB?usp=sharing
 
 #ECEF_basic_propagation.m is the main code that propagates the attitude, it also plots the pointing error, angular velocities and all modelled torques on the satellite
 
