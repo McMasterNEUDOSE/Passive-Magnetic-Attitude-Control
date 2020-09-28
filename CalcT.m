@@ -1,22 +1,24 @@
-function T=CalcT(B,BH,pos,sun,w,vel,rho,m,vol)
+function T=CalcT(B,BH,pos,sun,w,vel,rho,m,hyst_l,hyst_d,nrods,mres)
+% function T=CalcT(B,BH,pos,sun,w,vel,rho,m,hyst_l,hyst_d,nrods)
 
 % magnetic shit
 mbar=[0;m;0];
-mres=[-0.0039;-0.0055;0.0004]; %residual magnetic moment from gerhardt paper scaled by 2/3
+% mres=[-0.0039;-0.0055;0.0004]; %residual magnetic moment from gerhardt paper scaled by 2/3
+
 mu0=4*pi*1e-7;
+vol = nrods*0.25*pi*hyst_l*hyst_d^2;
 HystVol=[vol 0 vol];
-
-% hystH   = 95 * 1e-3;    % dimensions, m
-% hystDiam= 1 * 1e-3;
-% Nd  = 1/((4*hystH)/(sqrt(pi)*hystDiam) + 2);% demag factor
-
+% HystVol=[volx 0 volz];
+Nd  = 1/((4*hyst_l)/(sqrt(pi)*hyst_d) + 2);% demag factor
 % mhyst = (HystVol/mu0).*(BH'-B)./(1-Nd);
-mhyst = (HystVol/mu0).*(BH'-B);
+mhyst = (HystVol/mu0).*(BH')./(1-Nd);
+% mhyst = (HystVol/mu0).*(BH'-B);
 
 
 Mtot=mbar+mhyst'-mres;
 % Gravity Gradient parameters
-J= diag([0.0064, 0.0064, 0.0029]);
+% J= diag([0.0064, 0.0064, 0.0029]);
+J= diag([0.0102 , 0.0104, 0.0046]); 
 mue= (6.67408e-11)*(5.972e24); %earth gravitational parameter
 r_mag=norm(pos); coeff=3*mue/(r_mag^5); %constants for gravity gradient
 % Aerodynamic parameters
