@@ -1,4 +1,6 @@
-function dyneq=eqset(x,t,time,B,Bdot,eci,sunlight,v,dens,m,vol)
+function dyneq=eqset(x,t,time,B,Bdot,eci,sunlight,v,dens,m,hyst_l,hyst_d,nrods,mres)
+% function dyneq=eqset(x,t,time,B,Bdot,eci,sunlight,v,dens,m,hyst_l,hyst_d,nrods)
+
 
 w=x(1:3);
 q=x(4:7)';
@@ -23,12 +25,17 @@ BsFac=0.5*pi/Bs;
 k=(1/Hc)*tan(0.5*pi*Br/Bs);
 H=B_body'/mu0;
 
-J= diag([0.0064 , 0.0065, 0.0029]);
-Jvec=[0.0065; 0.0065; 0.0029];
+% J= diag([0.0064 , 0.0065, 0.0029]);
+% Jvec=[0.0065; 0.0065; 0.0029];
+J= diag([0.0102 , 0.0104, 0.0046]); 
+Jvec=[0.0102 ; 0.0104 ; 0.0046];
+
 w_vec=[(Jvec(3)-Jvec(2))*w(2)*w(3);(Jvec(1)-Jvec(3))*w(1)*w(3);(Jvec(2)-Jvec(1))*w(2)*w(1)];
 
 % Setting differential equations
-T=CalcT(B_body,BH,pos,sun,w',vel,rho,m,vol);
+T=CalcT(B_body,BH,pos,sun,w',vel,rho,m,hyst_l,hyst_d,nrods,mres);
+% T=CalcT(B_body,BH,pos,sun,w',vel,rho,m,hyst_l,hyst_d,nrods);
+
 Wdot=(T-w_vec)./Jvec;
 W=[0 w'];
 
