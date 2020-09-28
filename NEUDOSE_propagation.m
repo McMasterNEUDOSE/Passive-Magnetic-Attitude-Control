@@ -1,10 +1,13 @@
 close all;
 tic;
 
-days=10;
+days=1;
 tstep=20;
-m=0.45;
-vol=2e-7;
+m=0.32;
+hyst_l = 0.05;
+hyst_d = 0.001;
+nrods = 2; % rods per axis
+vol=nrods*0.25*pi*hyst_l*hyst_d^2;
 volx=vol;
 volz=vol;
 str_days=num2str(days); str_tstep=num2str(tstep); strm=num2str(m); strvol=num2str(vol);  strvolx=num2str(volx); strvolz=num2str(volz);
@@ -13,7 +16,11 @@ fname=strcat(path,str_days,'days_',str_tstep,'s.mat');
 data=cell2mat(struct2cell(load(fname))); 
 time=data(:,1); pos=data(:,2:4); vel=data(:,5:7); B_in=data(:,8:10); Bdot=data(:,11:13); 
 sun=data(:,14:16); 
-dens=cell2mat(struct2cell(load('neudoserho60s_28day.mat')));
+% dens=cell2mat(struct2cell(load('neudoserho60s_28day.mat')));
+% dens=cell2mat(struct2cell(load('neudoserho120s_365day.mat')));
+dens=cell2mat(struct2cell(load('neudoserho60s_60day.mat')));
+
+
 
 period=3600+32*60+39; % orbital period from https://keisan.casio.com/exec/system/1224665242
 mu0=4*pi*1e-7;
@@ -25,7 +32,7 @@ k=(1/Hc)*tan(0.5*pi*Br/Bs);
 
 
 rad2deg=180/pi;
-tspan=[0 days*86400];
+tspan=[0 0.1*days*86400];
 w0=[5;5;5]*pi/180; % nanoracks worst case scenario
 % w0=[0.17 ;-0.97 ;2.93]*pi/180; %CSSWE initial velocity
 % w0=[0;0;0]; % best case scenario
@@ -44,9 +51,9 @@ options=odeset('RelTol',1e-7,'AbsTol',1e-7,'Stats','on');
 
 
 
-[T,X]=ode420(@(t,x) eqset(x,t,time,B_in,Bdot,pos,sun,vel,dens,m,vol),tspan,init,options);
-% [T,X]=ode113quat(@(t,x) eqset(x,t,time,B_in,Bdot,pos,sun,vel,dens,m,vol),tspan,init,options);
-% [T,X]=ode113quat(@(t,x) eqset(x,t,time,B_in,Bdot,pos,sun,vel,dens,m,volx,volz),tspan,init,options);
+% [T,X]=ode420(@(t,x) eqset(x,t,time,B_in,Bdot,pos,sun,vel,dens,m,hyst_l,hyst_d,nrods),tspan,init,options);
+[T,X]=ode113quat(@(t,x) eqset(x,t,time,B_in,Bdot,pos,sun,vel,dens,m,hyst_l,hyst_d,nrods),tspan,init,options);
+% [T,X]=ode113quat(@(t,x) eqset(x,t,time,B_in,Bdot,pos,sun,vel,dens,m,hyst_l,hyst_d,nrods),tspan,init,options);
 
 
 
@@ -54,8 +61,29 @@ w=X(:,1:3);
 q=X(:,4:7);
 BH=X(:,8:10);
 t_days=T/86400;
-% 
+% Downsample data
+X = downsample(X,200);
+w=X(:,1:3);
+q=X(:,4:7);
+BH=X(:,8:10);
+T = downsample(T,200);
+t_days=T/86400;
 wdeg=(180/pi)*w;
+
+X_save_name = strcat('X_save_',num2str(days),'days.mat');
+q_save = downsample(q,100);
+q_save_name = strcat('q_save_',num2str(days),'days.mat');
+w_save = downsample(wdeg,100);
+w_save_name = strcat('w_save_',num2str(days),'days.mat');
+t_save = downsample(X,100);
+t_save_name = strcat('t_save_',num2str(days),'days.mat');
+save(X_save_name,'X');
+save(q_save_name,'q_save');
+save(t_save_name,'t_save');
+save(w_save_name,'w_save');
+
+
+
 
 figure()
 plot(t_days,wdeg(:,1),'g','LineWidth',1);
@@ -63,8 +91,7 @@ hold on
 plot(t_days,wdeg(:,2),'r','LineWidth',1);
 plot(t_days,wdeg(:,3),'b','LineWidth',1);
 legend('wx','wy','wz','LineWidth',1);
-% wtitle=strcat('Angular Velocities with m=',strm,' A*m^2, vol=',strvol,' m^3');
-% title(wtitle);
+title('Satellite angular rates');
 xlabel('Time (days)');
 ylabel('Angular Velocity (deg/s)');
 set(gca,'fontname','arial')  % Set it to arial
@@ -79,6 +106,7 @@ fig.Color = [1 1 1];
 box off
 grid on
 movegui('northwest');
+
 
 goal=10*ones(length(T),1);
 Btitle=strcat('Pointing error with m=',strm,' A*m^2, vol=',strvol,' m^3');
@@ -100,7 +128,7 @@ figure()
 plot(t_days,Beta,'r','LineWidth',1);
 hold on
 plot(t_days,goal,'b','LineWidth',1);
-% title(Btitle);
+title('Pointing error with respect to geomagnetic field lines');
 xlabel('Time (days)');
 ylabel('Pointing Error (deg)');
 set(gca,'fontname','arial')  % Set it to arial
@@ -116,6 +144,26 @@ box off
 grid on
 movegui('northeast');
 
+Nad    = calcNad(T, quatnormalize(q), interp1(time,pos,T));
+
+figure()
+plot(t_days,Nad,'b','LineWidth',1);
+title('Long axis angle to nadir');
+xlabel('Time (days)');
+ylabel('Nadir angle (deg)');
+set(gca,'fontname','arial')  % Set it to arial
+set(gca,'fontsize',13)  % Set it to arial
+ax = gca;
+ax.LineWidth = 1;
+ay = gca;
+ay.LineWidth = 1;
+fig = gcf;
+fig = gcf;
+fig.Color = [1 1 1];
+box off
+grid on
+movegui('north');
+
 %Energy analyis
 % E_k=dot((w.^2),([0.0065 0.0065 0.0029].*ones(length(T),3)),2);
 % E_p=-dot(([0 m 0].*ones(length(T),3)),quatrotate(q,interp1(time,B_in,T)),2);
@@ -130,7 +178,7 @@ movegui('northeast');
 toc;
 % % 
 [bar_torque,hyst_torque,gyro_torque,gg_torque,aero_torque,sun_torque,eddy_torque,res_torque]...
-    =plotT(T,time,q,w,interp1(time,B_in,T),BH,interp1(time,pos,T),interp1(time,vel,T),interp1(dens(:,1),dens(:,2),T),interp1(time,sun,T),m,vol);
+    =plotT(T,time,q,w,interp1(time,B_in,T),BH,interp1(time,pos,T),interp1(time,vel,T),interp1(dens(:,1),dens(:,2),T),interp1(time,sun,T),m,hyst_l,hyst_d,nrods);
 
 % [bar_torque,hyst_torque,gyro_torque,gg_torque,aero_torque,sun_torque,eddy_torque,res_torque]...
 %     =plotT(T,time,q,w,interp1(time,B_in,T),BH,interp1(time,pos,T),interp1(time,vel,T),interp1(dens(:,1),dens(:,2),T),interp1(time,sun,T),m,volx,volz);
