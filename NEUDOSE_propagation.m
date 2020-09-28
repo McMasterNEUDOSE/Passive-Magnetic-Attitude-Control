@@ -1,27 +1,41 @@
 close all;
 tic;
 
+% Simulation parameters
 days=1;
 tstep=20;
-m=0.32;
-hyst_l = 0.05;
-hyst_d = 0.001;
+w0=[5;5;5]*pi/180; % nanoracks worst case scenario
+% w0=[0.17 ;-0.97 ;2.93]*pi/180; %CSSWE initial velocity
+% w0=[0;0;0]; % best case scenario
+
+% Physical Design Parameters
+m=0.32; % Magnetic moment of bar magnet in A*m^2
+hyst_l = 0.05; % Length of hysteresis rods in m
+hyst_d = 0.001; % Diameter of hysteresis rods in m
 nrods = 2; % rods per axis
-vol=nrods*0.25*pi*hyst_l*hyst_d^2;
-volx=vol;
-volz=vol;
-str_days=num2str(days); str_tstep=num2str(tstep); strm=num2str(m); strvol=num2str(vol);  strvolx=num2str(volx); strvolz=num2str(volz);
+vol=nrods*0.25*pi*hyst_l*hyst_d^2; % Volume of hysteresis rods
+mres=[-0.0039;-0.0055;0.0004]; %residual magnetic moment in A*m^2
+% --------------------------------------------------------
+
+% Loading in Data
+str_days=num2str(days); str_tstep=num2str(tstep); strm=num2str(m); strvol=num2str(vol); 
 path='data_';
 fname=strcat(path,str_days,'days_',str_tstep,'s.mat');
 data=cell2mat(struct2cell(load(fname))); 
 time=data(:,1); pos=data(:,2:4); vel=data(:,5:7); B_in=data(:,8:10); Bdot=data(:,11:13); 
 sun=data(:,14:16); 
-% dens=cell2mat(struct2cell(load('neudoserho60s_28day.mat')));
-% dens=cell2mat(struct2cell(load('neudoserho120s_365day.mat')));
-dens=cell2mat(struct2cell(load('neudoserho60s_60day.mat')));
+if days<= 28
+    dens=cell2mat(struct2cell(load('neudoserho60s_28day.mat')));
 
+elseif days <=60
+     dens=cell2mat(struct2cell(load('neudoserho60s_60day.mat')));
+elseif days<= 365
+    dens=cell2mat(struct2cell(load('neudoserho120s_365day.mat')));
+end
+% --------------------------------------------------------
 
-
+     
+% Define constants
 period=3600+32*60+39; % orbital period from https://keisan.casio.com/exec/system/1224665242
 mu0=4*pi*1e-7;
 Bs=0.3;
@@ -29,14 +43,11 @@ Br=6.0618e-4; % from gerhardt dissertation
 Hc=0.3381; %from gerhardt dissertation
 BsFac=0.5*pi/Bs;
 k=(1/Hc)*tan(0.5*pi*Br/Bs);
-
-
 rad2deg=180/pi;
-tspan=[0 0.1*days*86400];
-w0=[5;5;5]*pi/180; % nanoracks worst case scenario
-% w0=[0.17 ;-0.97 ;2.93]*pi/180; %CSSWE initial velocity
-% w0=[0;0;0]; % best case scenario
+tspan=[0 0.001*days*86400];
+% --------------------------------------------------------
 
+% Initial values for ODE solver
 att_init=[30;90;-104]*pi/180; %initial beta 178.6952 deg
 att0=angle2quat(att_init(1),att_init(2),att_init(3),'XYZ');
 B0=quatrotate(att0,B_in(1,:));
@@ -44,32 +55,30 @@ Bdot0 = cross(-w0, B0) + quatrotate(att0, Bdot(1,:));
 Bh0 = (2*Bs/pi)*atan(k*((B0/mu0)-sign(Bdot0/mu0)*Hc))';
 init=[w0; att0';Bh0];
 
-
+% ODE solver options
 % options=odeset('RelTol',1e-7,'AbsTol',1e-10,'Stats','on');
 % options=odeset('RelTol',1e-7,'AbsTol',1e-9,'Stats','on');
 options=odeset('RelTol',1e-7,'AbsTol',1e-7,'Stats','on');
+% --------------------------------------------------------
 
+% Run simulations
+% [T,X]=ode420(@(t,x) eqset(x,t,time,B_in,Bdot,pos,sun,vel,dens,m,hyst_l,hyst_d,nrods,mres),tspan,init,options);
+[T,X]=ode113quat(@(t,x) eqset(x,t,time,B_in,Bdot,pos,sun,vel,dens,m,hyst_l,hyst_d,nrods,mres),tspan,init,options);
 
-
-% [T,X]=ode420(@(t,x) eqset(x,t,time,B_in,Bdot,pos,sun,vel,dens,m,hyst_l,hyst_d,nrods),tspan,init,options);
-[T,X]=ode113quat(@(t,x) eqset(x,t,time,B_in,Bdot,pos,sun,vel,dens,m,hyst_l,hyst_d,nrods),tspan,init,options);
-% [T,X]=ode113quat(@(t,x) eqset(x,t,time,B_in,Bdot,pos,sun,vel,dens,m,hyst_l,hyst_d,nrods),tspan,init,options);
-
-
-
-w=X(:,1:3);
-q=X(:,4:7);
-BH=X(:,8:10);
-t_days=T/86400;
+% Output data from simulation
+w=X(:,1:3); % Angular velocities
+q=X(:,4:7); % Attitude quaternions
+BH=X(:,8:10); % Hysteresis magnetic field
+t_days=T/86400; % Time in days
 % Downsample data
 X = downsample(X,200);
 w=X(:,1:3);
 q=X(:,4:7);
 BH=X(:,8:10);
 T = downsample(T,200);
-t_days=T/86400;
-wdeg=(180/pi)*w;
+wdeg=(180/pi)*w; % Convert angular rates to degrees/second
 
+% Saving data
 X_save_name = strcat('X_save_',num2str(days),'days.mat');
 q_save = downsample(q,100);
 q_save_name = strcat('q_save_',num2str(days),'days.mat');
@@ -82,9 +91,10 @@ save(q_save_name,'q_save');
 save(t_save_name,'t_save');
 save(w_save_name,'w_save');
 
+% --------------------------------------------------------
 
-
-
+% PLOTTING SECTION
+% Plot angular rates
 figure()
 plot(t_days,wdeg(:,1),'g','LineWidth',1);
 hold on
@@ -108,10 +118,9 @@ grid on
 movegui('northwest');
 
 
-goal=10*ones(length(T),1);
-Btitle=strcat('Pointing error with m=',strm,' A*m^2, vol=',strvol,' m^3');
-% Btitle=strcat('Pointing error with m=',strm,' A*m^2, xvol=',strvolx,',zvol=',strvolz,' m^3');
-Beta    = calcBeta(T, quatnormalize(q), interp1(time,B_in,T));
+goal=10*ones(length(T),1); % Goal pointing error
+Beta    = calcBeta(T, quatnormalize(q), interp1(time,B_in,T)); % Calculate pointing error angle
+% Calculate settling time and steady state error
 if days>6
     wind=length(T)/10;
     runav=movmean(Beta,wind);
