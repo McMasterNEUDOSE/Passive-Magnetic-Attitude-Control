@@ -9,7 +9,7 @@ w0=[5;5;5]*pi/180; % nanoracks worst case scenario
 % w0=[0;0;0]; % best case scenario
 
 % Physical Design Parameters
-m=0.32; % Magnetic moment of bar magnet in A*m^2
+m=0.317; % Magnetic moment of bar magnet in A*m^2
 hyst_l = 0.05; % Length of hysteresis rods in m
 hyst_d = 0.001; % Diameter of hysteresis rods in m
 nrods = 2; % rods per axis
