@@ -69,7 +69,6 @@ options=odeset('RelTol',1e-7,'AbsTol',1e-7,'Stats','on');
 w=X(:,1:3); % Angular velocities
 q=X(:,4:7); % Attitude quaternions
 BH=X(:,8:10); % Hysteresis magnetic field
-t_days=T/86400; % Time in days
 % Downsample data
 X = downsample(X,200);
 w=X(:,1:3);
@@ -77,6 +76,7 @@ q=X(:,4:7);
 BH=X(:,8:10);
 T = downsample(T,200);
 wdeg=(180/pi)*w; % Convert angular rates to degrees/second
+t_days=T/86400; % Time in days
 
 % Saving data
 X_save_name = strcat('X_save_',num2str(days),'days.mat');
