@@ -1,22 +1,25 @@
 function [bar_torque,hyst_torque,gyro_torque,gg_torque,aero_torque,sun_torque,eddy_torque,res_torque]...
-    =plotT(T,time,q,w,B_in,Bhyst,eci,vel,dens,sun,m,vol)
+    =plotT(T,time,q,w,B_in,Bhyst,eci,vel,dens,sun,m,hyst_l,hyst_d,nrods)
+% function [bar_torque,hyst_torque,gyro_torque,gg_torque,aero_torque,sun_torque,eddy_torque,res_torque]...
+%     =plotT(T,time,q,w,B_in,Bhyst,eci,vel,dens,sun,m,volx,volz)
 % This function is used to calculate torques for plotting
 
-% hystH   = 95 * 1e-3;    % dimensions, m
-% hystDiam= 1 * 1e-3;
-% Nd  = 1/((4*hystH)/(sqrt(pi)*hystDiam) + 2);% demag factor
+vol = nrods*0.25*pi*hyst_l*hyst_d^2;
 HystVol=[vol 0 vol];
+Nd  = 1/((4*hyst_l)/(sqrt(pi)*hyst_d) + 2);% demag factor
+
 % Constants
 L=length(T);
 % magnetic parameters
 mu0=4*pi*1e-7;
-% mhyst = (HystVol/mu0).*Bhyst./(1-Nd);
-mhyst = (HystVol/mu0).*Bhyst;
+mhyst = (HystVol/mu0).*(Bhyst-B_in)./(1-Nd);
+% mhyst = (HystVol/mu0).*Bhyst;
 mres=[-0.0039 -0.0055 0.0004].*ones(L,3); %residual magnetic moment from gerhardt paper scaled by 2/3
 bar_mom=[0 m 0].*ones(L,3);
 % Gravity Gradient Parameters
 mue= (6.67408e-11)*(5.972e24); %earth gravitational parameter
-J= diag([0.0064, 0.0065, 0.0029]);
+% J= diag([0.0064, 0.0065, 0.0029]);
+J= diag([0.0102 , 0.0104, 0.0046]); 
 % Aerodynamic Parameters
 cd=2.4; % drag coeffecient from paper
 rd=[0.0001 -0.0044 0.0007].*ones(L,3);% distance from centre of mass to geometric centre 
