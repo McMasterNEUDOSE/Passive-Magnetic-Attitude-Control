@@ -2,14 +2,14 @@ close all;
 tic;
 
 % Simulation parameters
-days=1;
+days=365;
 tstep=20;
 w0=[5;5;5]*pi/180; % nanoracks worst case scenario
 % w0=[0.17 ;-0.97 ;2.93]*pi/180; %CSSWE initial velocity
 % w0=[0;0;0]; % best case scenario
 
 % Physical Design Parameters
-m=0.317; % Magnetic moment of bar magnet in A*m^2
+m=0.32; % Magnetic moment of bar magnet in A*m^2
 hyst_l = 0.05; % Length of hysteresis rods in m
 hyst_d = 0.001; % Diameter of hysteresis rods in m
 nrods = 2; % rods per axis
@@ -29,6 +29,10 @@ if days<= 28
 
 elseif days <=60
      dens=cell2mat(struct2cell(load('neudoserho60s_60day.mat')));
+elseif days <=120
+     dens=cell2mat(struct2cell(load('neudoserho120s_120day.mat')));
+elseif days <=180
+     dens=cell2mat(struct2cell(load('neudoserho180s_180day.mat')));
 elseif days<= 365
     dens=cell2mat(struct2cell(load('neudoserho120s_365day.mat')));
 end
@@ -44,7 +48,7 @@ Hc=0.3381; %from gerhardt dissertation
 BsFac=0.5*pi/Bs;
 k=(1/Hc)*tan(0.5*pi*Br/Bs);
 rad2deg=180/pi;
-tspan=[0 0.001*days*86400];
+tspan=[0 days*86400];
 % --------------------------------------------------------
 
 % Initial values for ODE solver
@@ -75,8 +79,8 @@ w=X(:,1:3);
 q=X(:,4:7);
 BH=X(:,8:10);
 T = downsample(T,200);
-wdeg=(180/pi)*w; % Convert angular rates to degrees/second
 t_days=T/86400; % Time in days
+wdeg=(180/pi)*w; % Convert angular rates to degrees/second
 
 % Saving data
 X_save_name = strcat('X_save_',num2str(days),'days.mat');
