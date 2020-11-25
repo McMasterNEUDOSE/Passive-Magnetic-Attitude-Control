@@ -30,7 +30,7 @@ NumberOfAttitudePoints %s
 ScenarioEpoch          21 Jun 2022 16:00:00.00000
 InterpolationOrder     1
 CentralBody            Earth
-CoordinateAxes         Inertial
+CoordinateAxes         ICRF
 AttitudeTimeQuaternions
 %s
 END Attitude"""
