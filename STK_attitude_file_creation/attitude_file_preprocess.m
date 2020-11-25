@@ -21,8 +21,8 @@ q_interp = zeros(L,4); % Initialize interpolated quaternions
 w_interp = zeros(L,3); % Initialize interpolated angular velocites
 for i=1:L
     t_curr = t_STK(i);
-    q_interp(i,:)= interp1(t_downsamp,q_downsamp,t_curr); % Interpolate
-    w_interp(i,:)= interp1(t_downsamp,w_downsamp,t_curr);
+    q_interp(i,:)= lininterp1(t_downsamp,q_downsamp,t_curr); % Interpolate
+    w_interp(i,:)= lininterp1(t_downsamp,w_downsamp,t_curr);
 end
 
 % -------------------------------------
@@ -33,8 +33,8 @@ end
 % 
 % for i=1:1001
 %     t_curr = t_STK(i);
-%     q_interp(i,:)= interp1(t_downsamp,q_downsamp,t_curr);
-%     w_interp(i,:)= interp1(t_downsamp,w_downsamp,t_curr);
+%     q_interp(i,:)= lininterp1(t_downsamp,q_downsamp,t_curr);
+%     w_interp(i,:)= lininterp1(t_downsamp,w_downsamp,t_curr);
 % end
 % -------------------------------------
 
