@@ -7,9 +7,21 @@ and https://help.agi.com/stk/11.0.1/Content/stk/example_AttitudeFile4.htm
 
 days = 365 # Number of days in simulation
 tstep = 60 # Timestep in minutes
-n_points = days*86400*days +1 # Total number of points (starts at 0 so add 1)
+n_points = round(86400*days/tstep)
 
 a_fname ='attitude_'+str(days)+'days_'+str(tstep)+'s.txt' # Naming convention for the txt files
+
+# Old header:
+"""stk.v.11.7.0
+BEGIN Attitude
+NumberOfAttitudePoints %s
+ScenarioEpoch          21 Jun 2022 16:00:00.00000
+InterpolationOrder     1
+CentralBody            Earth
+CoordinateAxes         Inertial
+AttitudeTimeQuaternions
+%s
+END Attitude"""
 
 # Header below
 header="""stk.v.11.7.0
@@ -19,7 +31,7 @@ ScenarioEpoch          21 Jun 2022 16:00:00.00000
 InterpolationOrder     1
 CentralBody            Earth
 CoordinateAxes         Inertial
-AttitudeTimeQuatAngVels
+AttitudeTimeQuaternions
 %s
 END Attitude"""
 
