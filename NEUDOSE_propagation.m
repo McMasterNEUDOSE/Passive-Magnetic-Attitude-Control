@@ -23,7 +23,7 @@ mres=[-0.0046;-0.0046;0.000575]; %residual magnetic moment in A*m^2
 [data_fname,rho_fname] = file_selec(days,tstep,rho_year);
 data=cell2mat(struct2cell(load(data_fname))); 
 time=data(:,1); pos=data(:,2:4); vel=data(:,5:7); B_in=data(:,8:10); Bdot=data(:,11:13); 
-sun=data(:,14:16); 
+sun=data(:,14:16).*data(:,17); 
 dens=cell2mat(struct2cell(load(rho_fname)));
 % --------------------------------------------------------
 
